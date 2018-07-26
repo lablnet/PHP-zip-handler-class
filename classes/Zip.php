@@ -1,124 +1,106 @@
 <?php
-	/**
-	 * This package can Handel archives/zips
-	 *
-	 * @author   Malik Umer Farooq <lablnet01@gmail.com>
-	 * @author-profile https://www.facebook.com/malikumerfarooq01/
-	 * @license MIT 
-	 */
+/**
+ * This package can Handel archives/zips.
+ *
+ * @author   Malik Umer Farooq <lablnet01@gmail.com>
+ * @author-profile https://www.facebook.com/malikumerfarooq01/
+ *
+ * @license MIT
+ */
 class Zip
- {
-	 	/**
-		 * Open zip extract zip 
-		 * @param 
-		 * $file -> file that you want uncompress/open
-		 * $target -> where you extract file
-		 * $delete -> true delete zip file false not delete
-		 * @return boolean
-		 */	 
-	public function Extract($file,$target,$delete = false){
+{
+    /**
+     * Open zip extract zip.
+     *
+     * @param
+     * $file -> file that you want uncompress/open
+     * $target -> where you extract file
+     * $delete -> true delete zip file false not delete
+     *
+     * @return bool
+     */
+    public function Extract($file, $target, $delete = false)
+    {
+        $zip = new ZipArchive();
 
-		$zip = new ZipArchive();
+        $x = $zip->open($file);
 
-		$x = $zip->open($file);
+        if ($x === true) {
+            $zip->extractTo($target);
 
-		if($x === true){
+            $zip->close();
 
-			$zip->extractTo($target);
+            return true;
 
-			$zip->close();
+            if ($delete === true) {
+                unlink($file);
+            }
+        }
+    }
 
-			return true;
+    /**
+     * Compress file into zip.
+     *
+     * @param
+     * @files array() list of file
+     * @destination where you save compressed file
+     * $overwrite -> if already overwrite
+     *
+     * @return bool
+     */
+    public function Compress($files = [], $destination = '', $overwrite = false)
+    {
 
-			if($delete === true){
+        //if the zip file already exists and overwrite is false, return false
 
-				unlink($file);	
+        if (file_exists($destination) && !$overwrite) {
+            return false;
+        }
 
-			}
+        //vars
+        $valid_files = [];
 
-		}
+        //if files were passed in...
 
-	}
+        if (is_array($files)) {
 
-		 /**
-		 * Compress file into zip 
-		 * @param 
-		 * @files array() list of file
-		 * @destination where you save compressed file
-		 * $overwrite -> if already overwrite
-		 * @return boolean
-		 */	
-	public function Compress($files = array(),$destination = '',$overwrite = false) {
+            //cycle through each file
 
-	    //if the zip file already exists and overwrite is false, return false
+            foreach ($files as $file) {
 
-	    if(file_exists($destination) && !$overwrite) { 
+                //make sure the file exists
 
-	    		return false;
+                if (file_exists($file)) {
+                    $valid_files[] = $file;
+                }
+            }
+        }
 
-	    	 }
+        //if we have good files...
 
-	    //vars
-	    $valid_files = array();
+        if (count($valid_files)) {
 
-	    //if files were passed in...
+            //create the archive
 
-	    if(is_array($files)) {
+            $zip = new ZipArchive();
 
-	        //cycle through each file
+            if ($zip->open($destination, $overwrite ? ZIPARCHIVE::OVERWRITE : ZIPARCHIVE::CREATE) !== true) {
+                return false;
+            }
+            //add the files
 
-	        foreach($files as $file) {
+            foreach ($valid_files as $file) {
+                $zip->addFile($file, $file);
+            }
 
-	            //make sure the file exists
+            //close the zip -- done!
 
-	            if(file_exists($file)) {
+            $zip->close();
 
-	                $valid_files[] = $file;
-
-	            }
-
-	        }
-
-	    }
-
-	    //if we have good files...
-
-	    if(count($valid_files)) {
-
-	        //create the archive
-
-	        $zip = new ZipArchive();
-
-	        if($zip->open($destination,$overwrite ? ZIPARCHIVE::OVERWRITE : ZIPARCHIVE::CREATE) !== true) {
-
-	            return false;
-
-	        }
-	        //add the files
-
-	        foreach($valid_files as $file) {
-
-	            $zip->addFile($file,$file);
-
-	        }
-
-	        //close the zip -- done!
-
-	        $zip->close();
-
-	        //check to make sure the file exists
-	        return file_exists($destination);
-
-	    }
-
-	    else
-
-	    {
-
-	        return false;
-
-	    }
-
-	}	 
-
- }
+            //check to make sure the file exists
+            return file_exists($destination);
+        } else {
+            return false;
+        }
+    }
+}
